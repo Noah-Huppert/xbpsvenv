@@ -38,6 +38,11 @@ resolve_alias() { # ( alias ), stdout = workspace name
     if [ -z "$alias" ]; then
 	   return 1
     fi
+
+    if ! ls "$ALIASES_DIR"/* &> /dev/null; then
+	   die "Workspace with name or alias \"$alias\" not found"
+	   return 1
+    fi
     
     for f in $(ls "$ALIASES_DIR"/*); do
 	   if [[ $(cat "$f") == "$alias" ]]; then
