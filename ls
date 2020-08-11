@@ -37,6 +37,11 @@ rm_table_f() {
 }
 trap rm_table_f ERR EXIT
 
+if ! ls -d void-packages-* &> /dev/null; then
+    bold "No workspaces"
+    exit 0
+fi
+
 for workspace in $(ls -d void-packages-*); do
     alias="-"
     if [ -f "$ALIASES_DIR/$workspace" ]; then
