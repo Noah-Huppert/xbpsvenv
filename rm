@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "he" opt; do
+    case "$opt" in
+	   h) cat <<EOF
+rm - Remove a workspace.
+
+USAGE
+
+    rm [-h,-e] WORKSPACE
+
+OPTIONS
+
+    -h    Show this help text.
+    -e    Empty the workspaces trash folder. Deletes workspaces forever.
+
+ARGUMENTS
+
+    WORKSPACE    Name of workspace to remove.
+
+EOF
+		 exit 0
+		 ;;
+	   e) mode_empty=true ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace=$(resolve_alias "$1")
+shift
+if [ -z "$mode_empty" ] && [ -z "$workspace" ]; then
+    die "WORKSPACE argument required"
+fi
+
+# Remove
+if [ -n "$workspace" ]; then
+    bold "Removing $workspace workspace"
+    mv "$WORKSPACES_DIR/$workspace" "$WORKSPACES_TRASH_DIR"
+    check "Failed to remove workspace $workspace"
+
+    if [ -f "$NOTES_DIR/$workspace" ]; then
+	   echo "Removing note"
+	   
+	   mv "$NOTES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/note"
+	   check "Failed to remove workspace note"
+    fi
+
+    if [ -f "$ALIASES_DIR/$workspace" ]; then
+	   echo "Removing alias"
+	   
+	   mv "$ALIASES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/alias"
+	   check "Failed to remove workspace alias"
+    fi
+fi
+
+if [ -n "$mode_empty" ]; then
+    bold "Emptying workspaces trash folder"
+    
+    rm -rf "$WORKSPACES_TRASH_DIR"/*
+    check "Failed to empty workspaces trash folder."
+fi

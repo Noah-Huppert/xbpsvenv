@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Configuration
+GIT_REMOTE_UPSTREAM=git@github.com:void-linux/void-packages.git
+
+# Options
+opt_commit=$(git rev-parse HEAD)
+opt_commit_show="$opt_commit (HEAD)"
+
+opt_remote="$GIT_REMOTE_UPSTREAM"
+opt_remote_show="$opt_remote (upstream)"
+
+while getopts "hc:r:p:a:n:" opt; do
+    case "$opt" in
+	   h) cat <<EOF
+workon    Create a new workspace by checking out a variation of the source code.
+
+USAGE
+
+    workon [-p <PR #>,-c <COMMIT>,-r <REMOTE>,-a <ALIAS>,-n <NOTE>]
+
+OPTIONS
+
+    -p <PR #>      Apply a patch from a GitHub pull request.
+    -c <COMMIT>    The Git commit to checkout as the base. Defaults to
+			    the current HEAD.
+    -r <REMOTE>    The Git remote to fetch from. Default 
+			    to upstream.
+    -a <ALIAS>     Alias to set for created workspace.
+    -n <NOTE>      Note to set for created workspace.
+
+EOF
+		 exit 0
+		 ;;
+	   p) opt_pr_num="$OPTARG" ;;
+	   c)
+		  opt_commit=$(git rev-parse "$OPTARG")
+
+		  if [[ "$opt_commit" != "$OPTARG" ]]; then
+			 opt_commit_show="$opt_commit ($OPTARG)"
+		  else
+			 opt_commit_show="$opt_commit"
+		  fi
+		  ;;
+	   r)
+		  case "$OPTARG" in
+			 remote) opt_remote="$GIT_REMOTE_UPSTREAM" ;;
+			 *) opt_remote="$OPTARG" ;;
+		  esac
+
+		  if [[ "$opt_remote" != "$OPTARG" ]]; then
+			 opt_remote_show="$opt_remote ($OPTARG)"
+		  else
+			 opt_remote_show="$opt_remote"
+		  fi
+		  ;;
+	   a) opt_alias="$OPTARG" ;;
+	   n) opt_note="$OPTARG" ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+if [ -z "$opt_note" ] && [ -n "$opt_pr_num" ]; then
+    opt_note="PR #$opt_pr_num"
+fi
+
+if [ -z "$opt_alias" ] && [ -n "$opt_pr_num" ]; then
+    opt_alias="pr-$opt_pr_num"
+fi
+
+shift $((OPTIND-1))
+
+# Manage base Git repository for remote
+remote_base_dir="$WORKSPACES_DIR/remote-bases/$opt_remote"
+if [ ! -d "$remote_base_dir" ]; then
+    # Haven't cloned remote down, clone
+    bold "Cloning remote Git repository $opt_remote_show into $remote_base_dir"
+    
+    git clone "$opt_remote" "$remote_base_dir"
+    check "Failed to clone Git remote repository $opt_remote_show"
+
+    cd "$remote_base_dir"
+    check "Failed to change into Git remote repository directory"
+
+    ./xbps-pkg binary-bootstrap
+    check "Failed to bootstrap xbps-src via binary packages"
+else
+    # Remote exists, update
+    cd "$remote_base_dir"
+    check "Failed to change into Git remote repository directory"
+    
+    git pull origin master
+    check "Failed to update Git remote repository $opt_remote_show"
+
+    ./xbps-src bootstrap-update
+    check "Failed to update xbps-src bootstrap"
+fi
+
+# Make copy of remote repository
+bold "Copying $opt_remote_show files"
+
+workspace_dir=$(mktemp --dry-run "$WORKSPACES_DIR/void-packages-XXXXX")
+check "Failed to make temporary directory name for workspace"
+
+workspace=$(basename "$workspace_dir")
+
+cleanup_workspace() {
+    rm -rf "$workspace_dir"
+}
+trap cleanup_workspace ERR EXIT
+
+echo "Directory: $workspace_dir"
+echo "Remote   : $opt_remote_show"
+echo "Commit   : $opt_commit_show"
+echo "PR #     : $opt_pr_num"
+echo "Alias    : $opt_alias"
+echo "Note     : $opt_note"
+
+cp -r "$remote_base_dir" "$workspace_dir"
+check "Failed to copy Git remote repository $opt_remote_show to $workspace_dir"
+
+# Checkout commit
+cd "$workspace_dir"
+check "Failed to change into the workspace's directory"
+
+bold "Checking out $opt_commit_show"
+git checkout "$opt_commit"
+check "Failed to checkout the $opt_commit_show Git commit"
+
+# Apply PR patch
+if [ -n "$opt_pr_num" ]; then
+    curl -L "https://github.com/void-linux/void-packages/pull/$opt_pr_num.patch" | git apply
+    check "Failed to apply the GitHub Pull Request #$opt_pr_num patch"
+fi
+
+# Create alias and note
+if [ -n "$opt_alias" ]; then
+    bold "Setting alias"
+    
+    "$prog_dir/alias" "$workspace" "$opt_alias"
+    check "Failed to set alias for new workspace"
+fi
+
+if [ -n "$opt_note" ]; then
+    bold "Setting note"
+    
+    "$prog_dir/note" "$workspace" "$opt_note"
+    check "Failed to set note for new workspace"
+fi
+
+bold "Ready in $workspace_dir"
+trap - ERR EXIT

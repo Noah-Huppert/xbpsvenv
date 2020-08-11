@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "h" opt; do
+    case "h" in
+	   h) cat <<EOF
+install - Install XBPS package.
+
+USAGE
+
+    install [-h] WORKSPACE PKG [-- [XBPS_INSTALL_OPTS...]]
+
+OPTIONS
+
+    -h    Show this help text.
+
+ARGUMENTS
+
+    WORKSPACE            Name of workspace.
+    PKG                  Name of package.
+    XBPS_INSTALL_OPTS    Extra options passed to xbps-install
+
+EOF
+		 exit 0
+		 ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace=$(resolve_alias "$1")
+shift
+if [ -z "$workspace" ]; then
+    die "WORKSPACE argument required"
+fi
+
+pkg="$1"
+shift
+if [ -z "$pkg" ]; then
+    die "PKG argument required"
+fi
+
+xbps_install_opts=""
+if [[ "$1" == "--" ]]; then
+    shift
+    xbps_install_opts="$@"
+fi
+
+if [ -n "$xbps_install_opts" ]; then
+    xbps_install_opts="$xbps_install_opts "
+fi
+
+# Install
+xbps_install_pre=""
+if [ "$EUID" -ne 0 ]; then
+    xbps_install_pre=sudo
+    echo "(Running xbps-install with sudo)"
+fi
+
+echo "$xbps_install_pre xbps-install --repository=$WORKSPACES_DIR/$workspace/hostdir/binpkgs $xbps_install_opts $pkg"
+"$xbps_install_pre" xbps-install --repository="$WORKSPACES_DIR/$workspace/hostdir/binpkgs" $xbps_install_opts "$pkg"
+check "Failed to install $pkg in $workspace"

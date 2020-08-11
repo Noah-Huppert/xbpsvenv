@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "h" opt; do
+    case "h" in
+	   h) cat <<EOF
+pkg - Run xbps-src pkg on package in workspace.
+
+USAGE
+
+    pkg [-h] WORKSPACE PKG [-- [XBPS_SRC_OPTS...]]
+
+OPTIONS
+
+    -h    Show this help text.
+
+ARGUMENTS
+
+    WORKSPACE        Name of workspace.
+    PKG              Name of package.
+    XBPS_SRC_OPTS    Extra options passed to xbps-src. Defaults to "-j$(nproc)".
+
+EOF
+		 exit 0
+		 ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace=$(resolve_alias "$1")
+shift
+if [ -z "$workspace" ]; then
+    die "WORKSPACE argument required"
+fi
+
+pkg="$1"
+shift
+if [ -z "$pkg" ]; then
+    die "PKG argument required"
+fi
+
+xbps_src_opts="-j$(nproc)"
+if [[ "$1" == "--" ]]; then
+    shift
+    xbps_src_opts="$@"
+fi
+
+
+# Package
+cd "$WORKSPACES_DIR/$workspace"
+check "Failed to change to workspaces directory"
+
+bold "./xbps-src $xbps_src_opts pkg $pkg"
+./xbps-src "$xbps_src_opts" pkg "$pkg"
+check "Failed to run xbps-src pkg on $pkg"

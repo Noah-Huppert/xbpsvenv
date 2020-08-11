@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "h" opt; do
+    case "h" in
+	   h) cat <<EOF
+alias - Set an alias for a workspace.
+
+USAGE
+
+    alias [-h] WORKSPACE ALIAS.
+
+OPTIONS
+
+    -h    Show this help text.
+
+ARGUMENTS
+
+    WORKSPACE    Name of workspace to set alias.
+    ALIAS        Single work (can have underscores & dashes), alias.
+
+EOF
+		 exit 0
+		 ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace="$1"
+shift
+if [ -z "$workspace" ]; then
+    die "WORKSPACE argument required"
+fi
+
+alias="$1"
+shift
+if [ -z "$alias" ]; then
+    die "ALIAS argument required"
+fi
+
+# Set alias
+echo "$alias" > "$ALIASES_DIR/$workspace"

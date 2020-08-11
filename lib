@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Helpers
+bold() {
+    echo "$(tput bold)$@$(tput sgr0)"
+}
+
+check() {
+    if [ "$?" -ne "0" ]; then
+	   die "$@"
+    fi
+}
+
+die() {
+    echo "Error: $@" >&2
+    exit 1
+}
+
+WORKSPACES_DIR="$prog_dir/workspaces"
+WORKSPACES_TRASH_DIR="$prog_dir/.workspaces-trash"
+NOTES_DIR="$WORKSPACES_DIR/notes"
+ALIASES_DIR="$WORKSPACES_DIR/aliases"
+
+mkdir -p "$WORKSPACES_DIR"
+check "Failed to create workspaces directory"
+
+mkdir -p "$WORKSPACES_TRASH_DIR"
+check "Failed to create workspaces trash directory"
+
+mkdir -p "$NOTES_DIR"
+check "Failed to create workspaces notes directory"
+
+mkdir -p "$ALIASES_DIR"
+check "Failed to create workspaces aliases directory"
+
+resolve_alias() { # ( alias ), stdout = workspace name
+    alias="$1"
+    shift
+    if [ -z "$alias" ]; then
+	   return 1
+    fi
+    
+    for f in $(ls "$ALIASES_DIR"/*); do
+	   if [[ $(cat "$f") == "$alias" ]]; then
+		  basename "$f"
+		  return 0
+	   fi
+    done
+
+    if [ ! -d "$WORKSPACES_DIR/$alias" ]; then
+	   die "Workspace with name or alias \"$alias\" not found"
+    fi
+	  
+    echo "$alias"
+}
