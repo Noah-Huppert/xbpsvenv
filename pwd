@@ -12,7 +12,7 @@ pwd - Get location of workspace.
 
 USAGE
 
-    note [-h] WORKSPACE
+    pwd [-h] WORKSPACE
 
 OPTIONS
 

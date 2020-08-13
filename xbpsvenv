@@ -68,4 +68,4 @@ if [ -z "$matched_cmd" ]; then
     die "Invalid COMMAND argument, must be one of: ${sub_commands[@]}"
 fi
 
-"$prog_dir/$cmd" "$@"
+exec "$prog_dir/$cmd" "$@"
