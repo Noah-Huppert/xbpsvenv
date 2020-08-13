@@ -22,6 +22,10 @@ ARGUMENTS
 
     WORKSPACE    Name of workspace for which to get directory.
 
+BEHAVIOR
+
+    Outputs an absolute path to a workspace.
+
 EOF
 		 exit 0
 		 ;;

@@ -5,7 +5,7 @@ prog_dir=$(realpath $(dirname "$0"))
 . "$prog_dir/lib"
 
 # Options
-while getopts "he" opt; do
+while getopts "hule" opt; do
     case "$opt" in
 	   h) cat <<EOF
 rm - Remove a workspace.
@@ -17,15 +17,33 @@ USAGE
 OPTIONS
 
     -h    Show this help text.
-    -e    Empty the workspaces trash folder. Deletes workspaces forever.
+    -u    If provided removes a workspace from the trash folder.
+    -l    List names of trashed workspaces. No other option or arguments can be
+          provided if -l.
+    -e    Empty the workspaces trash folder. Deletes workspaces forever. If the
+          WORKSPACE argument is not provided and -e is no workspace will be deleted.
 
 ARGUMENTS
 
-    WORKSPACE    Name of workspace to remove.
+    WORKSPACE    Name of workspace to remove. Not required if -l or -e is provided.
+
+BEHAVIOR
+
+    Moves the specified workspace to a trash directory.
+
+    Which can be emptied by passing the -e option. The WORKSPACE argument can be
+    omitted in this case.
+
+    Trashed workspaces can be listed via the -l option. The WORKSPACE argument
+    cannot be provided in this case. No other option can be specified either.
+
+    Trashed workspaces can be restored via the -u option.
 
 EOF
 		 exit 0
 		 ;;
+	   u) mode_untrash=true ;;
+	   l) mode_list=true ;;
 	   e) mode_empty=true ;;
 	   '?') die "Unknown option" ;;
     esac
@@ -34,36 +52,82 @@ done
 # Arguments
 shift $((OPTIND-1))
 
-workspace=$(resolve_alias "$1")
+workspace=$(resolve_alias "$1" notfoundreturn)
 shift
-if [ -z "$mode_empty" ] && [ -z "$workspace" ]; then
+if [ -z "$mode_empty" ] && [ -z "$mode_list" ] && [ -z "$workspace" ]; then
     die "WORKSPACE argument required"
 fi
 
-# Remove
+# Remove or untrash
 if [ -n "$workspace" ]; then
-    bold "Removing $workspace workspace"
-    mv "$WORKSPACES_DIR/$workspace" "$WORKSPACES_TRASH_DIR"
-    check "Failed to remove workspace $workspace"
-
-    if [ -f "$NOTES_DIR/$workspace" ]; then
-	   echo "Removing note"
-	   
-	   mv "$NOTES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/note"
-	   check "Failed to remove workspace note"
+    # Ensure workspace argument is not provided if listing
+    if [ -n "$mode_list" ]; then
+	   die "WORKSPACE argument cannot be provided when listing"
     fi
 
-    if [ -f "$ALIASES_DIR/$workspace" ]; then
-	   echo "Removing alias"
+    # Trash or untrash
+    if [ -n "$mode_untrash" ]; then
+	   # Check workspace by name is trashed
+	   if [ ! -d "$WORKSPACES_TRASH_DIR/$workspace" ]; then
+		  die "Trashed workspace by name \"$workspace\" does not exist so cannot untrash"
+	   fi
+
+	   # Untrash note and alias
+	   if [ -f "$WORKSPACES_TRASH_DIR/$workspace/note" ]; then
+		  echo "Untrashing $workspace note"
+		  
+		  mv "$WORKSPACES_TRASH_DIR/$workspace/note" "$NOTES_DIR/$workspace"
+		  check "Failed to untrash workspace note"
+	   fi
+
+	   if [ -f "$WORKSPACES_TRASH_DIR/$workspace/alias" ]; then
+		  echo "Untrashing $workspace alias"
+		  
+		  mv "$WORKSPACES_TRASH_DIR/$workspace/alias" "$ALIASES_DIR/$workspace"
+		  check "Failed to untrash workspace alias"
+	   fi
 	   
-	   mv "$ALIASES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/alias"
-	   check "Failed to remove workspace alias"
+	   # Untrash repository copy
+	   bold "Untrashing $workspace workspace"
+	   mv "$WORKSPACES_TRASH_DIR/$workspace" "$WORKSPACES_DIR"
+	   check "Failed to untrash workspace $workspace"
+    else
+	   # Check workspace by name exists
+	   if [ ! -d "$WORKSPACES_DIR/$workspace" ]; then
+		  die "Workspace by name \"$workspace\" does not exist so cannot be trashed"
+	   fi
+	   
+	   # Trash repository copy
+	   bold "Removing $workspace workspace"
+	   mv "$WORKSPACES_DIR/$workspace" "$WORKSPACES_TRASH_DIR"
+	   check "Failed to remove workspace $workspace"
+
+	   # Trash note and alias
+	   if [ -f "$NOTES_DIR/$workspace" ]; then
+		  echo "Removing note"
+		  
+		  mv "$NOTES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/note"
+		  check "Failed to remove workspace note"
+	   fi
+
+	   if [ -f "$ALIASES_DIR/$workspace" ]; then
+		  echo "Removing alias"
+		  
+		  mv "$ALIASES_DIR/$workspace" "$WORKSPACES_TRASH_DIR/$workspace/alias"
+		  check "Failed to remove workspace alias"
+	   fi
     fi
 fi
 
+# Empty if required
 if [ -n "$mode_empty" ]; then
     bold "Emptying workspaces trash folder"
     
     rm -rf "$WORKSPACES_TRASH_DIR"/*
     check "Failed to empty workspaces trash folder."
+fi
+
+# List if required
+if [ -n "$mode_list" ]; then
+    ls "$WORKSPACES_TRASH_DIR"
 fi

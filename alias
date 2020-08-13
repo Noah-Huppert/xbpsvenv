@@ -12,7 +12,7 @@ alias - Set an alias for a workspace.
 
 USAGE
 
-    alias [-h] WORKSPACE ALIAS.
+    alias [-h] WORKSPACE ALIAS]
 
 OPTIONS
 
@@ -21,7 +21,15 @@ OPTIONS
 ARGUMENTS
 
     WORKSPACE    Name of workspace to set alias.
-    ALIAS        Single work (can have underscores & dashes), alias.
+    ALIAS        Single word (can have underscores & dashes) alias. Empty or "-" to
+                 remove an alias. 
+
+BEHAVIOR
+
+    Sets or removes a workspace's alias. Then with any command which takes a 
+    workspace name as an argument an alias can be provided instead.
+
+    No two workspaces can have the same alias.
 
 EOF
 		 exit 0
@@ -33,7 +41,7 @@ done
 # Arguments
 shift $((OPTIND-1))
 
-workspace="$1"
+workspace=$(resolve_alias "$1")
 shift
 if [ -z "$workspace" ]; then
     die "WORKSPACE argument required"
@@ -41,9 +49,17 @@ fi
 
 alias="$1"
 shift
-if [ -z "$alias" ]; then
-    die "ALIAS argument required"
+
+if [ -n "$alias" ]; then
+    clash=$(resolve_alias "$alias" nodie)
+    if [ -n "$clash" ]; then
+	   die "Cannot set $workspace workspace's alias to \"$alias\", the workspace $clash has the same alias"
+    fi
 fi
 
 # Set alias
+if [[ "$alias" == "-" ]]; then # "-" signifies the alias should be empty
+    alias=""
+fi
+
 echo "$alias" > "$ALIASES_DIR/$workspace"

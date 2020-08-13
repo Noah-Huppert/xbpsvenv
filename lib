@@ -15,10 +15,13 @@ die() {
     exit 1
 }
 
-WORKSPACES_DIR="$prog_dir/workspaces"
-WORKSPACES_TRASH_DIR="$prog_dir/.workspaces-trash"
-NOTES_DIR="$WORKSPACES_DIR/notes"
-ALIASES_DIR="$WORKSPACES_DIR/aliases"
+prog_dir=$(realpath $(dirname "$0"))
+
+WORKSPACES_DIR="$prog_dir/.workspaces"
+WORKSPACES_TRASH_DIR="$WORKSPACES_DIR/.workspaces-trash"
+REMOTE_BASES_DIR="$WORKSPACES_DIR/.remotes"
+NOTES_DIR="$WORKSPACES_DIR/.notes"
+ALIASES_DIR="$WORKSPACES_DIR/.aliases"
 
 mkdir -p "$WORKSPACES_DIR"
 check "Failed to create workspaces directory"
@@ -32,28 +35,46 @@ check "Failed to create workspaces notes directory"
 mkdir -p "$ALIASES_DIR"
 check "Failed to create workspaces aliases directory"
 
-resolve_alias() { # ( alias ), stdout = workspace name
+resolve_alias() { # ( alias, flags ), stdout = workspace name
+    # flags can contain multiple of the following substrings:
+    # - nodie: Don't die for any reason
+    # - notfoundreturn: If a workspace is not found return the alias value provided.
+    
+    # Arguments
     alias="$1"
     shift
     if [ -z "$alias" ]; then
 	   return 1
     fi
 
-    if ! ls "$ALIASES_DIR"/* &> /dev/null; then
-	   die "Workspace with name or alias \"$alias\" not found"
-	   return 1
-    fi
-    
-    for f in $(ls "$ALIASES_DIR"/*); do
-	   if [[ $(cat "$f") == "$alias" ]]; then
-		  basename "$f"
-		  return 0
-	   fi
-    done
+    flags="$1"
+    shift
 
-    if [ ! -d "$WORKSPACES_DIR/$alias" ]; then
+    # Check for workspaces with name
+    if ls "$WORKSPACES_DIR"/* &> /dev/null; then
+	   for f in $(ls -d "$WORKSPACES_DIR"/*); do
+		  if [[ $(basename "$f") == "$alias" ]]; then
+			 basename "$f"
+			 return 0
+		  fi
+	   done
+    fi
+
+    # Check for aliases with name
+    if ls "$ALIASES_DIR"/* &> /dev/null; then
+	   for f in $(ls "$ALIASES_DIR"/*); do
+		  if [[ $(cat "$f") == "$alias" ]]; then
+			 basename "$f"
+			 return 0
+		  fi
+	   done
+    fi
+
+    # If haven't returned by this point there is no workspace with
+    # a matching name or alias.
+    if echo "$flags" | grep notfoundreturn &> /dev/null; then
+	   echo "$alias"
+    elif ! echo "$flags" | grep nodie &> /dev/null; then
 	   die "Workspace with name or alias \"$alias\" not found"
     fi
-	  
-    echo "$alias"
 }

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Load sub-commands
+sub_commands=()
+for f in $(find "$prog_dir" -maxdepth 1 -type f -executable -not -name $(basename "$0") | sort); do
+    sub_commands+=($(basename "$f"))
+done
+
+# Options
+while getopts "h" opt; do
+    case "h" in
+	   h) cat <<EOF
+xbpsvenv - Convenient separated void-packages environments.
+
+USAGE
+
+    xbpsvenv [-h] COMMAND [ARGS...]
+
+OPTIONS
+
+    -h    Show this help text.
+
+ARGUMENTS
+
+    COMMAND    Sub-command to run. Can be:
+EOF
+
+		 for subcmd in "${sub_commands[@]}"; do
+			h=$("$prog_dir/$subcmd" -h | head -n 1)
+			echo "                 - $h"
+		 done
+
+		 cat <<EOF
+    ARGS...    Arguments will be passed to the sub-command.
+
+BEHAVIOR
+
+    Executes sub-command.
+
+EOF
+		 exit 0
+		 ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+cmd="$1"
+shift
+if [ -z "$cmd" ]; then
+    die "COMMAND argument required"
+fi
+
+matched_cmd=""
+for subcmd in "${sub_commands[@]}"; do
+    if [[ "$subcmd" == "$cmd" ]]; then
+	   matched_cmd=true
+    fi
+done
+
+if [ -z "$matched_cmd" ]; then
+    die "Invalid COMMAND argument, must be one of: ${sub_commands[@]}"
+fi
+
+"$prog_dir/$cmd" "$@"

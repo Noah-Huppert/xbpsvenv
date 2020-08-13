@@ -21,7 +21,13 @@ OPTIONS
 ARGUMENTS
 
     WORKSPACE    Name of workspace to set note.
-    NOTE...      Any number of words, note.
+    NOTE...      Any number of words, note. If empty or "-" the note will be set
+                 to empty.
+
+BEHAVIOR
+
+    Sets the note for a workspace. This can be used to save arbitrary comments
+    about a workspace.
 
 EOF
 		 exit 0
@@ -42,4 +48,7 @@ fi
 note="$@"
 
 # Set note
+if [[ "$note" == "-" ]]; then # Value of "-" indicates note should be empty.
+    note=""
+fi
 echo "$note" > "$NOTES_DIR/$workspace"

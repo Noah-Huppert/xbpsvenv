@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "hnd" opt; do
+    case "$opt" in
+	   h) cat <<EOF
+exec - Execute program in a workspace.
+
+USAGE
+
+    exec [-h,-n,-d] WORKSPACE [COMMON...] [-- EXEC...]
+
+OPTIONS
+
+    -h    Show this help text.
+    -n    No echo. Don't echo command before execution.
+    -d    Dry run, do not execute command.
+
+ARGUMENTS
+
+    WORKSPACE     Name of workspace.
+    COMMON        If provided runs a common operation. Accepted sub commands:
+                     
+                    pkg <PKG>
+                      Run "xbps-src pkg <PKG>". EXEC... will be passed to 
+                      xbps-src. Defaults to "-j\$(nproc)".
+                     
+                    install <pkg>
+                      Installs an .xbps package file from the workspace's 
+                      hostdir/binpkgs directory. EXEC... will be passed to
+                      xbps-install. Defaults to empty. 
+    EXEC...       Program and arguments to run.
+
+BEHAVIOR
+
+    Can be used to run common or arbitrary commands in a workspace. 
+
+EXAMPLES
+
+    - List files in workspace "foobar":
+      
+        exec foobar -- ls
+
+    - Package "curl" in workspace "foobar":
+
+        exec foobar pkg curl
+
+    - Package "curl" for i686 in workspace "foobar":
+
+        exec foobar pkg curl -- -ai686
+
+    - Install package "curl" without prompts in workspace "foobar":
+
+        exec foobar install curl -- -y
+
+EOF
+		 exit 0
+		 ;;
+	   n) opt_no_echo=true ;;
+	   d) opt_dry_run=true ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace=$(resolve_alias "$1")
+shift
+if [ -z "$workspace" ]; then
+    die "WORKSPACE argument required"
+fi
+
+common=()
+common_exec_default=""
+exec=()
+while [ -n "$1" ]; do
+    case "$1" in
+	   pkg)
+		  # Arguments
+		  shift
+		  pkg="$1"
+		  shift
+		  if [ -z "$pkg" ]; then
+			 die "<PKG> argument required"
+		  fi
+
+		  common=("./xbps-src" "%EXEC...%" "pkg" "$pkg")
+		  common_exec_default=("-j$(nproc)")
+		  ;;
+	   install)
+		  # Arguments
+		  shift
+		  pkg="$1"
+		  shift
+		  if [ -z "$pkg" ]; then
+			 die "<PKG> argument required"
+		  fi
+
+		  common=("xbps-install"
+				"--repository=$WORKSPACES_DIR/$workspace/hostdir/binpkgs"
+				"%EXEC...%"
+				"$pkg")
+		  common_exec_default=()
+		  ;;
+	   --)
+		  sep_dash_occurred=true
+		  shift
+		  ;&
+	   *)
+		  if [ -z "$sep_dash_occurred" ]; then
+			 die "Two dashes (\"--\") are required to signify the beginning of the PROGRAM... argument(s) but found \"$1\""
+		  fi
+
+		  exec+=("$1")
+		  shift
+		  ;;
+    esac
+done
+
+# Prepare execution parameters
+args=()
+
+# If running common program
+if [ -n "$common" ]; then
+    # Default EXEC... to common specific default
+    if [ -z "$exec" ]; then
+	   exec="$common_exec_default"
+    fi
+
+    for arg in "${common[@]}"; do
+	   # If special substitution string which marks where EXEC... should be
+	   # placed in a common command.
+	   if [[ "$arg" == "%EXEC...%" ]]; then
+		  if [ -n "$exec" ]; then
+			 for e in "${exec[@]}"; do
+				args+=("$e")
+			 done
+		  fi
+	   else
+		  # If regular
+		  args+=("$arg")
+	   fi
+    done
+elif [ -n "$exec" ]; then
+    # If not running common program
+    args="$exec"
+else
+    die "Must either specify COMMON... and / or EXEC..."
+fi
+
+# Execute
+cd "$WORKSPACES_DIR/$workspace"
+check "Failed to change to workspaces directory"
+
+if [ -n "$opt_dry_run" ]; then
+    if [ -z "$opt_no_echo" ]; then
+	   echo "[dry run] ${args[@]}"
+    fi
+elif [ -z "$opt_no_echo" ]; then
+    set -x
+    exec "${args[@]}"
+fi

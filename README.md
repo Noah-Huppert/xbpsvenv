@@ -5,13 +5,16 @@ Convenient separated void-packages environments.
 - [Overview](#overview)
 
 # Overview
-Meant to automate several common tasks (Like checking out & build changes from 
-a PR). Allows for multiple versions of the void-packages repository to be used 
-at once.
+Creates virtual xbps-src void-packages environments named **workspaces**. 
+Provides programs for managing **workspaces** and performing common tasks
+(ex., checking out & build changes from a PR).
+
+Allows for multiple versions of the void-packages repository to be used at once.
 
 Example usage:
 
 ```shell
+% 
 % ./workon -c master -p 2566
 % ./pkg pr-2566 curl
 % ./install pr-2566 curl
