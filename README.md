@@ -25,6 +25,8 @@ Provides the `xbpsvenv` script with the commands:
 
 See the [install](#install) section for installation instructions.
 
+Have feedback or find a bug? Please open an issue, I'd love to talk with you!
+
 # Examples
 Checkout changes from GitHub Pull Request #18693 and package `curl`:
 
