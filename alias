@@ -12,7 +12,7 @@ alias - Set an alias for a workspace.
 
 USAGE
 
-    alias [-h] WORKSPACE ALIAS]
+    alias [-h] WORKSPACE [ALIAS]
 
 OPTIONS
 
