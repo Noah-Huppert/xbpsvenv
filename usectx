@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(realpath $(dirname "$0"))
+. "$prog_dir/lib"
+
+# Options
+while getopts "hs" opt; do
+    case "$opt" in
+	   h) cat <<EOF
+usectx - Set a workspace to be used by default in the future.
+
+USAGE
+
+    usectx [-h,-s] [WORKSPACE]
+
+OPTIONS
+
+    -h    Show this help text.
+    -s    Show the default workspace. If -s no default workspace will be set and
+          the WORKSPACE argument will not be accepted.
+
+ARGUMENTS
+
+    WORKSPACE    Name of workspace to set as the default workspace. If empty or
+                 "-" is provided the default workspace will be cleared.
+
+BEHAVIOR
+
+    Records a workspace as being the default workspace. Then for any command which
+    takes a workspace you can pass "@" and it will resolve to the workspace which
+    you set.
+
+    The -s option will cause the current default workspace to be listed. Nothing
+    will be printed if there is none. If -s the WORKSPACE argument cannot be 
+    provided and no default workspace will be set.
+
+EOF
+		 exit 0
+		 ;;
+	   s) opt_mode_show=true ;;
+	   '?') die "Unknown option" ;;
+    esac
+done
+
+# Arguments
+shift $((OPTIND-1))
+
+workspace=$(resolve_alias "$1" noctx)
+shift
+
+# If show mode
+if [ -n "$opt_mode_show" ]; then
+    if [ -f "$DEFAULT_WORKSPACE_FILE" ]; then
+	   cat "$DEFAULT_WORKSPACE_FILE"
+    fi
+else
+    # Unset workspace if empty or "-"
+    if [ -z "$workspace" ] || [[ "$workspace" == "-" ]]; then
+	   if [ -f "$DEFAULT_WORKSPACE_FILE" ]; then
+		  workspace=$(cat $DEFAULT_WORKSPACE_FILE)
+		  check "Failed to get the name of the current default workspace"
+		  
+		  echo "Clearing workspace \"$workspace\" as default"
+		  
+		  rm "$DEFAULT_WORKSPACE_FILE"
+		  check "Failed to unset the default workspace"
+	   else
+		  echo "No default workspace currently set"
+	   fi
+    else
+	   # Set default workspace
+	   echo "$workspace" > "$DEFAULT_WORKSPACE_FILE"
+	   check "Failed to set default workspace"
+
+	   echo "Using workspace \"$workspace\" as default"
+    fi
+fi

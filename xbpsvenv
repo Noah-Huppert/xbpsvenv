@@ -12,7 +12,7 @@ done
 
 # Options
 while getopts "h" opt; do
-    case "h" in
+    case "$opt" in
 	   h) cat <<EOF
 xbpsvenv - Convenient separated void-packages environments.
 

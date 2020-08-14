@@ -22,6 +22,7 @@ Provides the `xbpsvenv` script with the commands:
 - **note**: Set note for workspace
 - **pwd**: Get location of workspace
 - **rm**: Remove a workspace
+- **usectx**: Set a workspace to be used by default in the future
 
 See the [install](#install) section for installation instructions.
 

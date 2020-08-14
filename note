@@ -6,7 +6,7 @@ prog_dir=$(realpath $(dirname "$0"))
 
 # Options
 while getopts "h" opt; do
-    case "h" in
+    case "$opt" in
 	   h) cat <<EOF
 note - Set note for workspace.
 

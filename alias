@@ -6,7 +6,7 @@ prog_dir=$(realpath $(dirname "$0"))
 
 # Options
 while getopts "h" opt; do
-    case "h" in
+    case "$opt" in
 	   h) cat <<EOF
 alias - Set an alias for a workspace.
 
@@ -22,7 +22,8 @@ ARGUMENTS
 
     WORKSPACE    Name of workspace to set alias.
     ALIAS        Single word (can have underscores & dashes) alias. Empty or "-" to
-                 remove an alias. 
+                 remove an alias. Cannot be "@" since it is reserved to refer to the
+                 default workspace.
 
 BEHAVIOR
 
@@ -49,6 +50,10 @@ fi
 
 alias="$1"
 shift
+
+if [[ "$alias" == "@" ]]; then
+    die "ALIAS cannot be \"@\" as this is used to signify the default workspace"
+fi
 
 if [ -n "$alias" ]; then
     clash=$(resolve_alias "$alias" nodie)

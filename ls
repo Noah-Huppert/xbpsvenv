@@ -6,7 +6,7 @@ prog_dir=$(realpath $(dirname "$0"))
 
 # Options
 while getopts "h" opt; do
-    case "h" in
+    case "$opt" in
 	   h) cat <<EOF
 ls - List workspaces.
 
@@ -24,6 +24,7 @@ BEHAVIOR
     Each line is a workspace. Properties are delimited by spaces. The properties 
     of workspaces which are listed:
 
+      - If the workspace is the default, "@" indicates it is, "-" not.
       - Name. One token.
       - Alias. If none is set displayed as "-". One token.
       - Note. The remainder of tokens on a line. If none is set displayed as "-".
@@ -46,7 +47,10 @@ rm_table_f() {
     rm -f "$table_f"
 }
 trap rm_table_f ERR EXIT
-echo "Workspace Alias" > "$table_f"
+echo "Default Workspace Alias" > "$table_f"
+
+default_workspace=$("$prog_dir/usectx" -s)
+check "Failed to retrieve the name of the current default workspace"
 
 if ls -d void-packages-* &> /dev/null; then
     for workspace in $(ls -d void-packages-*); do
@@ -60,7 +64,12 @@ if ls -d void-packages-* &> /dev/null; then
 		  fi
 	   fi
 
-	   echo "$workspace $alias" >> "$table_f"
+	   default_mark="-"
+	   if [[ "$workspace" == "$default_workspace" ]]; then
+		  default_mark="@"
+	   fi
+
+	   echo "$default_mark $workspace $alias" >> "$table_f"
     done
 fi
 
@@ -85,4 +94,4 @@ while read -r line; do
     fi
 
     echo "$line  $note"
-done <<< $(column -t --table-columns Workspace,Alias --table-noheadings --table-right Alias -s' ' "$table_f")
+done <<< $(column -t --table-columns Default,Workspace,Alias --table-noheadings --table-right Alias -s' ' "$table_f")

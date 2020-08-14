@@ -220,12 +220,14 @@ fi
 # Execute
 cd "$WORKSPACES_DIR/$workspace"
 check "Failed to change to workspaces directory"
-x
+
 if [ -n "$opt_dry_run" ]; then
     if [ -z "$opt_no_echo" ]; then
+	   echo "[dry run] cd $WORKSPACES_DIR/$workspace"
 	   echo "[dry run] ${args[@]}"
     fi
 elif [ -z "$opt_no_echo" ]; then
-    set -x
-    exec ${args[@]}
+    echo "+ cd $WORKSPACES_DIR/$workspace"
+    echo "+ ${args[@]}"
+    exec "${args[@]}"
 fi

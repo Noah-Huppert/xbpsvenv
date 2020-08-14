@@ -22,6 +22,7 @@ WORKSPACES_TRASH_DIR="$WORKSPACES_DIR/.workspaces-trash"
 REMOTE_BASES_DIR="$WORKSPACES_DIR/.remotes"
 NOTES_DIR="$WORKSPACES_DIR/.notes"
 ALIASES_DIR="$WORKSPACES_DIR/.aliases"
+DEFAULT_WORKSPACE_FILE="$WORKSPACES_DIR/.default-workspace"
 
 mkdir -p "$WORKSPACES_DIR"
 check "Failed to create workspaces directory"
@@ -39,6 +40,7 @@ resolve_alias() { # ( alias, flags ), stdout = workspace name
     # flags can contain multiple of the following substrings:
     # - nodie: Don't die for any reason
     # - notfoundreturn: If a workspace is not found return the alias value provided.
+    # - noctx: Doesn't allow the "@" to substitute in for the default workspace.
     
     # Arguments
     alias="$1"
@@ -49,6 +51,16 @@ resolve_alias() { # ( alias, flags ), stdout = workspace name
 
     flags="$1"
     shift
+
+    # Check for default workspace
+    if [[ "$alias" == "@" ]]; then
+	   if ! echo "$flags" | grep "noctx" &> /dev/null; then
+		  if [ -f "$DEFAULT_WORKSPACE_FILE" ]; then
+			 cat "$DEFAULT_WORKSPACE_FILE"
+			 return 0
+		  fi
+	   fi
+    fi
 
     # Check for workspaces with name
     if ls "$WORKSPACES_DIR"/* &> /dev/null; then
