@@ -23,16 +23,21 @@ OPTIONS
 ARGUMENTS
 
     WORKSPACE     Name of workspace.
-    COMMON        If provided runs a common operation. Accepted sub commands:
+    COMMON...     If provided runs a common operation. Accepted sub commands:
                      
-                    pkg <PKG>
+                    pkg PKG
                       Run "xbps-src pkg <PKG>". EXEC... will be passed to 
                       xbps-src. Defaults to "-j\$(nproc)".
                      
-                    install <pkg>
+                    install PKG
                       Installs an .xbps package file from the workspace's 
                       hostdir/binpkgs directory. EXEC... will be passed to
                       xbps-install. Defaults to empty. 
+
+                    edit [PKG] [FILE]
+                      Edit's a package's files using \$EDITOR. If FILE is not 
+                      provided defaults to "template". EXEC... will be passed to 
+                      the editor before the file path.
     EXEC...       Program and arguments to run.
 
 BEHAVIOR
@@ -57,6 +62,14 @@ EXAMPLES
 
         exec foobar install curl -- -y
 
+    - Edit the "curl" package template in the "foobar" workspace:
+
+        exec foobar edit curl
+
+    - Edit the "curl" package directory from the "foobar" workspace:
+
+        exec foobar edit curl /
+
 EOF
 		 exit 0
 		 ;;
@@ -75,9 +88,20 @@ if [ -z "$workspace" ]; then
     die "WORKSPACE argument required"
 fi
 
+# COMMON... + EXEC... argument parsing.
+# Checks to see if the next arg is a know COMMON sub-command name. If so it lets
+# logic for that COMMON sub-command parse as many arguments as it needs. Each branch
+# of the case is responsible for popping off at least one argumet.
+#
+# common: should be an array of execution arguments. The special string %EXEC...%
+# can be used to signify that the contents of the EXEC... argument should be placed
+# in that location.
+# common_exec_default: If EXEC... is not provided these will be used instead.
+# Specific to the COMMON sub-command.
+# exec: the EXEC... argument
 common=()
-common_exec_default=""
-exec=()
+common_exec_default=()
+exec_params=()
 while [ -n "$1" ]; do
     case "$1" in
 	   pkg)
@@ -89,6 +113,7 @@ while [ -n "$1" ]; do
 			 die "<PKG> argument required"
 		  fi
 
+		  # Construct command
 		  common=("./xbps-src" "%EXEC...%" "pkg" "$pkg")
 		  common_exec_default=("-j$(nproc)")
 		  ;;
@@ -101,22 +126,61 @@ while [ -n "$1" ]; do
 			 die "<PKG> argument required"
 		  fi
 
+		  # Construct command
 		  common=("xbps-install"
 				"--repository=$WORKSPACES_DIR/$workspace/hostdir/binpkgs"
 				"%EXEC...%"
 				"$pkg")
 		  common_exec_default=()
 		  ;;
+	   edit)
+		  # Arguments
+		  shift
+		  
+		  if [[ "$1" != "--" ]]; then
+			 pkg="$1"
+			 shift
+		  fi
+
+		  if [[ "$1" != "--" ]]; then
+			 file="$1"
+			 shift
+		  fi
+
+		  # Ensure EDITOR set
+		  if [ -z "$EDITOR" ]; then
+			 die "\$EDITOR must be set"
+		  fi
+
+		  # Construct command
+		  edit_path=""
+		  if [ -n "$pkg" ]; then
+			 if [ -n "$file" ]; then
+				edit_path+="srcpkgs/$pkg/$file"
+			 else
+				edit_path+="srcpkgs/$pkg/template"
+			 fi
+		  fi
+
+		  common=("$EDITOR" "%EXEC...%")
+		  common_exec_default=()
+
+		  if [ -n "$edit_path" ]; then
+			 common+=("$edit_path")
+		  fi
+		  ;;
 	   --)
+		  # Record that we've seen the seperator dashes so that we can start
+		  # adding items to EXEC...
 		  sep_dash_occurred=true
 		  shift
 		  ;&
 	   *)
 		  if [ -z "$sep_dash_occurred" ]; then
-			 die "Two dashes (\"--\") are required to signify the beginning of the PROGRAM... argument(s) but found \"$1\""
+			 die "Two dashes (\"--\") are required to signify the beginning of the EXEC... argument(s) but found \"$1\""
 		  fi
 
-		  exec+=("$1")
+		  exec_params+=("$1")
 		  shift
 		  ;;
     esac
@@ -128,16 +192,16 @@ args=()
 # If running common program
 if [ -n "$common" ]; then
     # Default EXEC... to common specific default
-    if [ -z "$exec" ]; then
-	   exec="$common_exec_default"
+    if [ -z "$exec_params" ]; then
+	   exec_params="$common_exec_default"
     fi
 
-    for arg in "${common[@]}"; do
+    for arg in ${common[@]}; do
 	   # If special substitution string which marks where EXEC... should be
 	   # placed in a common command.
 	   if [[ "$arg" == "%EXEC...%" ]]; then
-		  if [ -n "$exec" ]; then
-			 for e in "${exec[@]}"; do
+		  if [ -n "$exec_params" ]; then
+			 for e in ${exec_params[@]}; do
 				args+=("$e")
 			 done
 		  fi
@@ -146,9 +210,9 @@ if [ -n "$common" ]; then
 		  args+=("$arg")
 	   fi
     done
-elif [ -n "$exec" ]; then
+elif [ -n "$exec_params" ]; then
     # If not running common program
-    args="$exec"
+    args=${exec_params[@]}
 else
     die "Must either specify COMMON... and / or EXEC..."
 fi
@@ -156,12 +220,12 @@ fi
 # Execute
 cd "$WORKSPACES_DIR/$workspace"
 check "Failed to change to workspaces directory"
-
+x
 if [ -n "$opt_dry_run" ]; then
     if [ -z "$opt_no_echo" ]; then
 	   echo "[dry run] ${args[@]}"
     fi
 elif [ -z "$opt_no_echo" ]; then
     set -x
-    exec "${args[@]}"
+    exec ${args[@]}
 fi
