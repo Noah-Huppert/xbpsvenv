@@ -20,7 +20,7 @@ OPTIONS
 
 BEHAVIOR
 
-    First a table header line is printer. Next a list of workspaces is printed.
+    First a table header line is printed. Next a list of workspaces is printed.
     Each line is a workspace. Properties are delimited by spaces. The properties 
     of workspaces which are listed:
 
