@@ -17,7 +17,7 @@ die() {
 
 prog_dir=$(dirname $(realpath "$0"))
 
-WORKSPACES_DIR="$prog_dir/.workspaces"
+WORKSPACES_DIR="$HOME/.local/share/xbpsvenv"
 WORKSPACES_TRASH_DIR="$WORKSPACES_DIR/.workspaces-trash"
 REMOTE_BASES_DIR="$WORKSPACES_DIR/.remotes"
 NOTES_DIR="$WORKSPACES_DIR/.notes"

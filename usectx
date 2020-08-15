@@ -5,25 +5,24 @@ prog_dir=$(dirname $(realpath "$0"))
 . "$prog_dir/lib"
 
 # Options
-while getopts "hs" opt; do
+while getopts "h" opt; do
     case "$opt" in
 	   h) cat <<EOF
 usectx - Set a workspace to be used by default in the future.
 
 USAGE
 
-    usectx [-h,-s] [WORKSPACE]
+    usectx [-h] [WORKSPACE]
 
 OPTIONS
 
     -h    Show this help text.
-    -s    Show the default workspace. If -s no default workspace will be set and
-          the WORKSPACE argument will not be accepted.
 
 ARGUMENTS
 
-    WORKSPACE    Name of workspace to set as the default workspace. If empty or
-                 "-" is provided the default workspace will be cleared.
+    WORKSPACE    Name of workspace to set as the default workspace. If "-" is 
+                 provided the default workspace will be cleared. If not provided
+                 the default workspace is shown.
 
 BEHAVIOR
 
@@ -31,14 +30,13 @@ BEHAVIOR
     takes a workspace you can pass "@" and it will resolve to the workspace which
     you set.
 
-    The -s option will cause the current default workspace to be listed. Nothing
-    will be printed if there is none. If -s the WORKSPACE argument cannot be 
-    provided and no default workspace will be set.
+    Passing "-" as WORKSPACE will clear the default workspace.
+
+    Not passing any value for WORKSPACE will show the current default workspace.
 
 EOF
 		 exit 0
 		 ;;
-	   s) opt_mode_show=true ;;
 	   '?') die "Unknown option" ;;
     esac
 done
@@ -46,17 +44,17 @@ done
 # Arguments
 shift $((OPTIND-1))
 
-workspace=$(resolve_alias "$1" noctx)
+workspace="$1"
 shift
 
 # If show mode
-if [ -n "$opt_mode_show" ]; then
+if [ -z "$workspace" ]; then
     if [ -f "$DEFAULT_WORKSPACE_FILE" ]; then
 	   cat "$DEFAULT_WORKSPACE_FILE"
     fi
 else
-    # Unset workspace if empty or "-"
-    if [ -z "$workspace" ] || [[ "$workspace" == "-" ]]; then
+    # Unset workspace if "-"
+    if [[ "$workspace" == "-" ]]; then
 	   if [ -f "$DEFAULT_WORKSPACE_FILE" ]; then
 		  workspace=$(cat $DEFAULT_WORKSPACE_FILE)
 		  check "Failed to get the name of the current default workspace"
@@ -69,6 +67,9 @@ else
 		  echo "No default workspace currently set"
 	   fi
     else
+	   workspace=$(resolve_alias "$workspace" noctx)
+	   check "Failed to find the workspace"
+	   
 	   # Set default workspace
 	   echo "$workspace" > "$DEFAULT_WORKSPACE_FILE"
 	   check "Failed to set default workspace"

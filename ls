@@ -49,7 +49,7 @@ rm_table_f() {
 trap rm_table_f ERR EXIT
 echo "Default Workspace Alias" > "$table_f"
 
-default_workspace=$("$prog_dir/usectx" -s)
+default_workspace=$("$prog_dir/usectx")
 check "Failed to retrieve the name of the current default workspace"
 
 if ls -d void-packages-* &> /dev/null; then
