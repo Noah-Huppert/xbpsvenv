@@ -51,9 +51,13 @@ changes from the GitHub Pull Request #18693:
 # Operations
 ## Make A Release
 1. Create a new release
-   1. Tag `master` `v<major>.<minor>.<patch>`.
-   2. Name the release `v<major>.<minor>.<patch>`.
-   3. Add a description with the following information:
+   1. Obtain the master branch's SHA256 checksum for later use:
+      ```
+	  git archive --format tar | sha256sum
+	  ```
+   2. Tag `master` `v<major>.<minor>.<patch>`.
+   3. Name the release `v<major>.<minor>.<patch>`.
+   4. Add a description with the following information:
       ```
 	  Short one sentence summary of release.
 	  
@@ -62,9 +66,9 @@ changes from the GitHub Pull Request #18693:
 	  - At a semi-major level.
 	  
 	  # Files
-	  | File                 | SHA256 |
-	  | -------------------- | ------ |
-	  | `<major>.<minor>.<patch>.tar.gz` | `badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb` |
+	  | File | SHA256 |
+	  | ---- | ------ |
+	  | `<major>.<minor>.<patch>.tar.gz` | `<SHA256 checksum>` |
 	  ```
 2. Update the `xbpsvenv` Void package
    1. Edit the `srcpkgs/xbpsvenv/template` in the 
