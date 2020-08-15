@@ -75,3 +75,5 @@ changes from the GitHub Pull Request #18693:
 	  [void-linux/void-packages repository](https://github.com/void-linux/void-packages).
    2. Update the `version` variable.
    3. Update the `checksum` variable.
+   4. Commit changes with the message `xbpsvenv: update to v<major>.<minor>.<patch>`.
+   5. Open a pull request.
