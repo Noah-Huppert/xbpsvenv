@@ -59,7 +59,7 @@ changes from the GitHub Pull Request #18693:
    3. Name the release `v<major>.<minor>.<patch>`.
    4. Add a description with the following information:
       ```
-	  cat <<EOF | sed 's/<major>.<minor>.<patch>/x.y.z/g'
+	  cat <<EOF
 	  Short one sentence summary of release.
 	  
 	  # Change log
