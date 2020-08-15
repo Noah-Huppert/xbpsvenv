@@ -59,17 +59,17 @@ changes from the GitHub Pull Request #18693:
    3. Name the release `v<major>.<minor>.<patch>`.
    4. Add a description with the following information:
       ```
-	  Short one sentence summary of release.
-	  
-	  # Change log
-	  - List of changes.
-	  - At a semi-major level.
-	  
-	  # Files
-	  | File | SHA256 |
-	  | ---- | ------ |
-	  | [`xbpsvenv-<major>.<minor>.<patch>.tar.gz`](https://github.com/Noah-Huppert/xbpsvenv/archive/v<major>.<minor>.<patch>.tar.gz) | `<SHA256 checksum>` |
-	  ```
+      Short one sentence summary of release.
+  
+      # Change log
+      - List of changes.
+      - At a semi-major level.
+      
+      # Files
+      | File | SHA256 |
+      | ---- | ------ |
+      | [`xbpsvenv-<major>.<minor>.<patch>.tar.gz`](https://github.com/Noah-Huppert/xbpsvenv/archive/v<major>.<minor>.<patch>.tar.gz) | `<SHA256 checksum>` |
+      ```
 2. Update the `xbpsvenv` Void package
    1. Edit the `srcpkgs/xbpsvenv/template` in the 
 	  [void-linux/void-packages repository](https://github.com/void-linux/void-packages).
