@@ -22,12 +22,12 @@ BEHAVIOR
 
     First a table header line is printed. Next a list of workspaces is printed.
     Each line is a workspace. Properties are delimited by spaces. The properties 
-    of workspaces which are listed:
+    of workspaces which are listed, in order of left to right:
 
       - If the workspace is the default, "@" indicates it is, "-" not.
       - Name. One token.
-      - Alias. If none is set displayed as "-". One token.
-      - Note. The remainder of tokens on a line. If none is set displayed as "-".
+      - Alias. If none "-". One token.
+      - Note. The remainder of tokens on a line. If none "-".
 
 EOF
 		 exit 0
@@ -43,6 +43,8 @@ cd "$WORKSPACES_DIR"
 check "Failed to change to workspaces directory"
 
 table_f=$(mktemp "$WORKSPACES_DIR/.ls-table-XXXXX")
+check "Failed to make temporary file to save workspaces list"
+
 rm_table_f() {
     rm -f "$table_f"
 }
