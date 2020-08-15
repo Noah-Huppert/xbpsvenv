@@ -51,8 +51,8 @@ changes from the GitHub Pull Request #18693:
 # Operations
 ## Make A Release
 1. Create a new release
-   1. Tag `master` `vmajor.minor.patch`.
-   2. Name the release `vmajor.minor.patch`.
+   1. Tag `master` `v<major>.<minor>.<patch>`.
+   2. Name the release `v<major>.<minor>.<patch>`.
    3. Add a description with the following information:
       ```
 	  Short one sentence summary of release.
@@ -64,9 +64,10 @@ changes from the GitHub Pull Request #18693:
 	  # Files
 	  | File                 | SHA256 |
 	  | -------------------- | ------ |
-	  | `vmajor.minor.patch` | `badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb` |
+	  | `<major>.<minor>.<patch>.tar.gz` | `badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb` |
 	  ```
 2. Update the `xbpsvenv` Void package
-   1. Edit the `srcpkgs/xbpsvenv/template`
-   2. Update the `version` variable
-   3. Update the `checksum` variable
+   1. Edit the `srcpkgs/xbpsvenv/template` in the 
+	  [void-linux/void-packages repository](https://github.com/void-linux/void-packages].
+   2. Update the `version` variable.
+   3. Update the `checksum` variable.
