@@ -5,9 +5,18 @@ prog_dir=$(dirname $(realpath "$0"))
 . "$prog_dir/lib"
 
 # Load sub-commands
-sub_commands=()
+sub_commands_help_f=$(mktemp "$WORKSPACES_DIR/.xbpsvenv-sub-commands-help-XXXX")
+check "Failed to create temporary file to generate help output"
+
+rm_sub_commands_help_f() {
+    rm -f "$sub_commands_help_f"
+}
+trap rm_sub_commands_help_f ERR EXIT
+
 for f in $(find "$prog_dir" -maxdepth 1 -type f -executable -not -name $(basename "$0") | sort); do
-    sub_commands+=($(basename "$f"))
+    
+    echo "                 - $($f -h | head -n 1 | sort)" >> "$sub_commands_help_f"
+    check "Failed to save \"$f\" sub-command help"
 done
 
 # Options
@@ -27,14 +36,7 @@ OPTIONS
 ARGUMENTS
 
     COMMAND    Sub-command to run. Can be:
-EOF
-
-		 for subcmd in "${sub_commands[@]}"; do
-			h=$("$prog_dir/$subcmd" -h | head -n 1)
-			echo "                 - $h"
-		 done
-
-		 cat <<EOF
+$(cat $sub_commands_help_f)
     ARGS...    Arguments will be passed to the sub-command.
 
 BEHAVIOR
