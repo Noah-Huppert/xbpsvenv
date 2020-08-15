@@ -34,6 +34,11 @@ ARGUMENTS
                       hostdir/binpkgs directory. EXEC... will be passed to
                       xbps-install. Defaults to empty. 
 
+                    xlint PKG
+                      Lint a package's template. The template path provided to
+                      xlint defaults to srcpkgs/<PKG>/template. EXEC... will 
+                      override the template path for xlint.
+
                     edit [PKG] [FILE]
                       Edit's a package's files using \$EDITOR. If FILE is not 
                       provided defaults to "template". EXEC... will be passed to 
@@ -118,7 +123,7 @@ while [ -n "$1" ]; do
 		  pkg="$1"
 		  shift
 		  if [ -z "$pkg" ]; then
-			 die "<PKG> argument required"
+			 die "PKG argument required"
 		  fi
 
 		  # Construct command
@@ -131,15 +136,31 @@ while [ -n "$1" ]; do
 		  pkg="$1"
 		  shift
 		  if [ -z "$pkg" ]; then
-			 die "<PKG> argument required"
+			 die "PKG argument required"
 		  fi
 
 		  # Construct command
-		  common=("xbps-install"
+		  if (( $EUID != 0 )); then
+			 common=("sudo" "-E")
+		  fi
+		  common=(${common[@]} "xbps-install"
 				"--repository=$WORKSPACES_DIR/$workspace/hostdir/binpkgs"
 				"%EXEC...%"
 				"$pkg")
 		  common_exec_default=()
+		  ;;
+	   xlint)
+		  # Arguments
+		  shift
+		  pkg="$1"
+		  shift
+		  if [ -z "$pkg" ]; then
+			 die "PKG argument required"
+		  fi
+
+		  # Construction command
+		  common=("xlint" "%EXEC...%")
+		  common_exec_default=("srcpkgs/$pkg/template")
 		  ;;
 	   edit)
 		  # Arguments
