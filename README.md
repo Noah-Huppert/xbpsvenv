@@ -53,7 +53,7 @@ changes from the GitHub Pull Request #18693:
 1. Create a new release
    1. Obtain the master branch's SHA256 checksum for later use:
       ```
-	  git archive --format tar master | sha256sum
+	  git archive --format tar.gz --prefix xbpsvenv-<major>.<minor>.<patch>/ master | sha256sum
 	  ```
    2. Tag `master` `v<major>.<minor>.<patch>`.
    3. Name the release `v<major>.<minor>.<patch>`.
@@ -68,7 +68,7 @@ changes from the GitHub Pull Request #18693:
 	  # Files
 	  | File | SHA256 |
 	  | ---- | ------ |
-	  | `<major>.<minor>.<patch>.tar.gz` | `<SHA256 checksum>` |
+	  | [`xbpsvenv-<major>.<minor>.<patch>.tar.gz`](https://github.com/Noah-Huppert/xbpsvenv/archive/v<major>.<minor>.<patch>.tar.gz) | `<SHA256 checksum>` |
 	  ```
 2. Update the `xbpsvenv` Void package
    1. Edit the `srcpkgs/xbpsvenv/template` in the 
