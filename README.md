@@ -59,6 +59,7 @@ changes from the GitHub Pull Request #18693:
    3. Name the release `v<major>.<minor>.<patch>`.
    4. Add a description with the following information:
       ```
+	  cat <<EOF | sed 's/<major>.<minor>.<patch>/x.y.z/g'
 	  Short one sentence summary of release.
 	  
 	  # Change log
@@ -69,6 +70,7 @@ changes from the GitHub Pull Request #18693:
 	  | File | SHA256 |
 	  | ---- | ------ |
 	  | [`xbpsvenv-<major>.<minor>.<patch>.tar.gz`](https://github.com/Noah-Huppert/xbpsvenv/archive/v<major>.<minor>.<patch>.tar.gz) | `<SHA256 checksum>` |
+	  EOF
 	  ```
 2. Update the `xbpsvenv` Void package
    1. Edit the `srcpkgs/xbpsvenv/template` in the 
