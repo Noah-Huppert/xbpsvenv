@@ -42,7 +42,7 @@ shift $((OPTIND-1))
 cd "$WORKSPACES_DIR"
 check "Failed to change to workspaces directory"
 
-table_f=$(mktemp "$prog_dir/.ls-table-XXXXX")
+table_f=$(mktemp "$WORKSPACES_DIR/.ls-table-XXXXX")
 rm_table_f() {
     rm -f "$table_f"
 }
