@@ -229,5 +229,5 @@ if [ -n "$opt_dry_run" ]; then
 elif [ -z "$opt_no_echo" ]; then
     echo "+ cd $WORKSPACES_DIR/$workspace"
     echo "+ ${args[@]}"
-    exec "${args[@]}"
+    exec ${args[@]}
 fi
