@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Helpers
-prog_dir=$(realpath $(dirname "$0"))
+prog_dir=$(dirname $(realpath "$0"))
 . "$prog_dir/lib"
 
 # Configuration
