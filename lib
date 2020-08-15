@@ -15,7 +15,7 @@ die() {
     exit 1
 }
 
-prog_dir=$(realpath $(dirname "$0"))
+prog_dir=$(dirname $(realpath "$0"))
 
 WORKSPACES_DIR="$prog_dir/.workspaces"
 WORKSPACES_TRASH_DIR="$WORKSPACES_DIR/.workspaces-trash"
