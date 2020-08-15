@@ -72,6 +72,6 @@ changes from the GitHub Pull Request #18693:
 	  ```
 2. Update the `xbpsvenv` Void package
    1. Edit the `srcpkgs/xbpsvenv/template` in the 
-	  [void-linux/void-packages repository](https://github.com/void-linux/void-packages].
+	  [void-linux/void-packages repository](https://github.com/void-linux/void-packages).
    2. Update the `version` variable.
    3. Update the `checksum` variable.
