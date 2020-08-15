@@ -5,6 +5,7 @@ Convenient separated void-packages environments.
 - [Overview](#overview)
 - [Examples](#examples)
 - [Install](#install)
+- [Operations](#operations)
 
 # Overview
 Creates virtual xbps-src void-packages environments named **workspaces**. 
@@ -44,5 +45,28 @@ changes from the GitHub Pull Request #18693:
 ```
 
 # Install
-1. Clone down this repository
+1. Download the [latest release](https://github.com/Noah-Huppert/xbpsvenv/releases)
 2. Make a symlink from the `xbpsvenv` file to `/usr/local/bin/xbpsvenv`
+
+# Operations
+## Make A Release
+1. Create a new release
+   1. Tag `master` `vmajor.minor.patch`.
+   2. Name the release `vmajor.minor.patch`.
+   3. Add a description with the following information:
+      ```
+	  Short one sentence summary of release.
+	  
+	  # Change log
+	  - List of changes.
+	  - At a semi-major level.
+	  
+	  # Files
+	  | File                 | SHA256 |
+	  | -------------------- | ------ |
+	  | `vmajor.minor.patch` | `badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb` |
+	  ```
+2. Update the `xbpsvenv` Void package
+   1. Edit the `srcpkgs/xbpsvenv/template`
+   2. Update the `version` variable
+   3. Update the `checksum` variable
