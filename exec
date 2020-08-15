@@ -38,6 +38,10 @@ ARGUMENTS
                       Edit's a package's files using \$EDITOR. If FILE is not 
                       provided defaults to "template". EXEC... will be passed to 
                       the editor before the file path.
+
+                    shell
+                      Open a \$SHELL shell in the workspace. EXEC... will be passed
+                      to the shell.
     EXEC...       Program and arguments to run.
 
 BEHAVIOR
@@ -69,6 +73,10 @@ EXAMPLES
     - Edit the "curl" package directory from the "foobar" workspace:
 
         exec foobar edit curl /
+
+    - Open a shell in the "foobar" workspace:
+
+        exec foobar shell
 
 EOF
 		 exit 0
@@ -168,6 +176,16 @@ while [ -n "$1" ]; do
 		  if [ -n "$edit_path" ]; then
 			 common+=("$edit_path")
 		  fi
+		  ;;
+	   shell)
+		  shift
+
+		  if [ -z "$SHELL" ]; then
+			 die "\$SHELL must be set"
+		  fi
+
+		  common=("$SHELL" "%EXEC...%")
+		  common_exec_default=()
 		  ;;
 	   --)
 		  # Record that we've seen the seperator dashes so that we can start
