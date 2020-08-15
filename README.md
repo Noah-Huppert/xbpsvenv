@@ -53,7 +53,7 @@ changes from the GitHub Pull Request #18693:
 1. Create a new release
    1. Obtain the master branch's SHA256 checksum for later use:
       ```
-	  git archive --format tar | sha256sum
+	  git archive --format tar master | sha256sum
 	  ```
    2. Tag `master` `v<major>.<minor>.<patch>`.
    3. Name the release `v<major>.<minor>.<patch>`.
