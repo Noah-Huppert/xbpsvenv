@@ -45,6 +45,18 @@ changes from the GitHub Pull Request #18693:
 ```
 
 # Install
+There are two installation methods:
+
+## Install Package
+(WIP: Not yet released)
+
+Only supported on Void Linux at the moment.
+
+```
+xbps-install xbpsvenv
+```
+
+## Download and Symlink
 1. Download the [latest release](https://github.com/Noah-Huppert/xbpsvenv/releases)
 2. Make a symlink from the `xbpsvenv` file to `/usr/local/bin/xbpsvenv`
 
