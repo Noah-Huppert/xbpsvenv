@@ -4,6 +4,10 @@ bold() {
     echo "$(tput bold)$@$(tput sgr0)"
 }
 
+boldf() {
+    printf "$(tput bold)$@$(tput sgr0)"
+}
+
 check() {
     if [ "$?" -ne "0" ]; then
 	   die "$@"

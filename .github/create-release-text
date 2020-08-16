@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+
+# Helpers
+prog_dir=$(dirname $(realpath "$0"))
+. "$prog_dir/../lib"
+
+# Arguments
+while getopts "h" opt; do
+    case "$opt" in
+	   h) cat <<EOF
+create-release-text - Create the text for a new GitHub release
+
+USAGE
+
+    create-release-text [-h]
+
+OPTIONS
+
+    -h            Show this help text.
+
+BEHAVIOR
+
+    Prompts for parameters of the release and outputs the text for a release.
+
+EOF
+		 exit 0
+		 ;;
+	   '?') die "Unknown option"
+    esac
+done
+
+# Prompt for values
+get_value() { # ( prompt )
+    # Arguments
+    prompt="$1"
+    shift
+    if [ -z "$prompt" ]; then
+	   die "PROMPT argument required"
+    fi
+
+    # Prompt
+    stop_prompting=""
+    use_bad_input_prompt=""
+
+    while [ -z "$stop_prompting" ]; do
+	   actual_prompt="$prompt"
+	   if [ -n "$use_bad_input_prompt" ]; then
+		  actual_prompt="Must not be empty: $actual_prompt"
+	   fi
+	   
+	   boldf "$actual_prompt %% " >&2
+	   read -e user_input
+
+	   if [ -n "$user_input" ]; then
+		  stop_checking=""
+		  check_prompt="Accept value \"$user_input\" (Y/n)"
+		  use_bad_input_check_prompt=""
+
+		  # Check value with user
+		  while [ -z "$stop_checking" ]; do
+			 # Prompt
+			 actual_check_prompt="$check_prompt"
+			 if [ -n "$use_bad_input_check_prompt" ]; then
+				actual_check_prompt="Must answer \"y\" or \"n\": $actual_check_prompt"
+			 fi
+			 
+			 printf "$actual_check_prompt %% " >&2
+			 read -e user_check_resp
+
+			 # Default to yes
+			 if [ -z "$user_check_resp" ]; then
+				user_check_resp=y
+			 fi
+
+			 # Downcase
+			 user_check_resp=$(echo "$user_check_resp" | tr '[:upper:]' '[:lower:]')
+
+			 case "$user_check_resp" in
+				y)
+				    stop_checking=true
+				    stop_prompting=true
+				    ;;
+				n)
+				    stop_checking=true
+				    echo "Ok, try again" >&2
+				    ;;
+				*)
+				    use_bad_input_check_prompt=true
+				    ;;
+			 esac
+		  done
+	   else
+		  use_bad_input_prompt=true
+	   fi
+    done
+
+    echo "$user_input"
+}
+
+print_list() { # ( list... )
+    list=($@)
+    
+    prefix_next=true
+    newline_next=""
+    for item in ${list[@]}; do
+	   if [[ "$item" == "\n" ]]; then
+		  prefix_next=true
+		  newline_next=true
+		  continue
+	   fi
+
+	   if [ -n "$newline_next" ]; then
+		  printf "\n"
+		  newline_next=""
+	   fi
+
+	   if [ -n "$prefix_next" ]; then
+		  printf -- "- "
+		  prefix_next=""
+	   fi
+	   
+	   printf "$item "
+    done
+
+    printf "\n"
+}
+
+get_list() { # ( prompt )
+    # Arguments
+    prompt="$1"
+    shift
+    if [ -z "$prompt" ]; then
+	   die "PROMPT argument required"
+    fi
+
+    # Prompt
+    responses=()
+    stop_prompting=""
+
+    new_item_prompt="New item"
+
+    # Get list items
+    bold "$prompt" >&2
+    echo "Enter item text then hit enter. To stop type \"QUIT\"." >&2
+    
+    while [ -z "$stop_prompting" ]; do
+	   if [ -n "$responses" ]; then
+		  echo "Current items:" >&2
+
+		  print_list ${responses[@]} >&2
+	   else
+		  echo "Currently empty." >&2
+	   fi
+	   
+	   user_input=$(get_value "New item")
+
+	   # If user wants to quit
+	   if [[ "$user_input" == "QUIT" ]]; then
+		  stop_prompting=true
+	   else
+		  echo "Added" >&2
+
+		  responses+=("$user_input")
+		  responses+=("\n")
+	   fi
+    done
+
+    echo ${responses[@]}
+}
+
+bold "=> Release parameters" >&2
+version=$(get_value "New version in format <major>.<minor>.<patch>")
+echo >&2
+summary=$(get_value "Short one sentence summary of release.")
+echo >&2
+changes=$(get_list "List of changes. At a semi-major level of detail.")
+echo >&2
+download_tar_gz_checksum=$(git archive --format tar.gz --prefix "xbpsvenv-$version/" HEAD | sha256sum | awk '{ print $1 }')
+check "Failed to determine the distribution .tar.gz file's checksum"
+
+# Generate text
+bold "=> Release text" >&2
+cat <<EOF
+$summary
+
+# Change log
+EOF
+
+print_list ${changes[@]}
+
+cat <<EOF
+
+# Files
+| File | SHA256 |
+| ---- | ------ |
+| [\`xbpsvenv-$version.tar.gz\`](https://github.com/Noah-Huppert/xbpsvenv/archive/v$version.tar.gz) | \`$download_tar_gz_checksum\` |
+
+EOF
