@@ -12,9 +12,10 @@ rm_sub_commands_help_f() {
     rm -f "$sub_commands_help_f"
 }
 trap rm_sub_commands_help_f ERR EXIT
+sub_commands=()
 
 for f in $(find "$prog_dir" -maxdepth 1 -type f -executable -not -name $(basename "$0") | sort); do
-    
+    sub_commands+=($(basename "$f"))
     echo "                 - $($f -h | head -n 1 | sort)" >> "$sub_commands_help_f"
     check "Failed to save \"$f\" sub-command help"
 done
